@@ -1,0 +1,54 @@
+{
+  "name": "dsh-context-mode",
+  "version": "0.1.0",
+  "description": "context-mode adapter for DeepSeek Harness: routes flood-prone tool calls into the context-mode MCP sandbox. Implements the PreToolUse deny + SessionStart routing equivalents that Claude Code gets from hooks.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "./types/index.d.ts",
+  "icon": "./icon.png",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ztc1522021381/dsh-context-mode.git"
+  },
+  "homepage": "https://github.com/ztc1522021381/dsh-context-mode#readme",
+  "bugs": {
+    "url": "https://github.com/ztc1522021381/dsh-context-mode/issues"
+  },
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.1-rc.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "types/index.d.ts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "context-mode",
+    "mcp",
+    "context-window",
+    "routing"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5-alpha.1"
+  }
+}

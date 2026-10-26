@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local scratch / one-off verification artifacts — not part of the plugin.
+probe-mcp.mjs
+verify.patch.yml
+HANDOFF.md

@@ -1,0 +1,73 @@
+# dsh-context-mode bundle patch.
+#
+# Mounts the context-mode adapter host half, and separately mounts the
+# context-mode MCP server itself so the ctx_* tools actually exist.
+#
+# Two independent rows:
+#
+#   1. `mcp-context-mode` — a @deepseek-ai/dsh-mcp-client row that spawns the
+#      globally installed context-mode MCP server over stdio.
+#
+#      Two Windows-specific gotchas, both learned the hard way:
+#
+#      a) `command` MUST be an absolute path. dsh-acp's resolveMcpConfigs
+#         hard-rejects a bare name ("mcpServers[i].command must be an absolute
+#         path"), so `context-mode` or `npx` are refused outright.
+#
+#      b) Point it at the real entry script, NOT the npm `.cmd` shim.
+#         StdioClientTransport spawns without `shell: true`, and Windows
+#         cannot execute a `.cmd` that way (ENOENT). The shim is a /bin/sh
+#         script anyway. context-mode's package.json declares
+#         `"context-mode": "./cli.bundle.mjs"`, so the correct invocation is
+#         `node <npm-root>/node_modules/context-mode/cli.bundle.mjs`.
+#
+#      Find yours with `npm root -g`, which prints <NPM_ROOT>:
+#        Windows  → C:\Users\<user>\AppData\Roaming\npm\node_modules
+#        macOS    → /usr/local/lib/node_modules
+#        Linux    → /usr/lib/node_modules or ~/.nvm/versions/node/<v>/lib/node_modules
+#
+#      You MUST replace the placeholder below with your own absolute path.
+#      `C:\Program Files\nodejs\node.exe` is the standard Node install path on
+#      Windows; on macOS/Linux use `/usr/local/bin/node` (or `which node`).
+#
+#      A literal string is used rather than a `!!js` expression that reads
+#      process.env, because dsh-acp's resolveMcpConfigs validates
+#      `isAbsolute(command)` and a failed expression would surface as an
+#      opaque config rejection at boot instead of an obvious TODO.
+#
+#      On macOS/Linux the shim IS executable, so the simpler form works:
+#        command = /usr/local/bin/context-mode
+#        args    = []
+#
+#   2. `context-mode` — the adapter row from this package. It registers the
+#      routing section (SessionStart equivalent) and the tools/pre-execute /
+#      tools/post-execute interceptors (the PreToolUse / PostToolUse
+#      equivalents).
+#
+# This file only applies when `dsh-context-mode` is listed in the profile's
+# `dsh.profile.bundles`.
+
+- insert:
+    # 1. The context-mode MCP server (stdio).
+    #
+    #    failOnStartupError stays false so a missing global install degrades
+    #    to "no ctx_* tools" instead of blocking harness boot.
+    - id: mcp-context-mode
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: context-mode
+        transport: stdio
+        command: 'C:\Program Files\nodejs\node.exe'
+        args:
+          # >>> REPLACE THIS with your own <NPM_ROOT> from `npm root -g`. <<<
+          # Windows default: %APPDATA%\npm\node_modules\context-mode\cli.bundle.mjs
+          # macOS/Linux:     /usr/local/lib/node_modules/context-mode/cli.bundle.mjs
+          - 'REPLACE_ME\node_modules\context-mode\cli.bundle.mjs'
+        failOnStartupError: false
+        reconnect:
+          enabled: true
+          maxAttempts: 10
+
+    # 2. The adapter host half.
+    - id: context-mode
+      name: dsh-context-mode
